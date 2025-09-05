@@ -1,0 +1,13 @@
+# Core data analysis libraries
+pandas>=1.5.0
+numpy>=1.24.0
+yfinance>=0.2.18
+
+# Date and time handling (included in standard library)
+# datetime is built-in
+
+# No email libraries needed for web version
+# No SendGrid or SMTP dependencies required
+
+# HTTP requests for potential API enhancements
+requests>=2.28.0
