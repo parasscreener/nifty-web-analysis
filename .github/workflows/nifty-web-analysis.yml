@@ -2,75 +2,63 @@ name: Nifty 50 Web Analysis
 
 on:
   schedule:
-    # Run every morning at 6:30 AM IST (1:00 AM UTC)
-    - cron: '0 1 * * 1-5'  # Weekdays only
-  workflow_dispatch:  # Allow manual triggering
+    - cron: '0 1 * * 1-5'  # 6:30 AM IST weekdays
+  workflow_dispatch:
   push:
     branches: [ main ]
-    paths: 
-      - 'main_web.py'
-      - 'generate_html.py'
-      - '.github/workflows/nifty-web-analysis.yml'
 
-# Set permissions for GitHub Pages deployment
+# Critical: Set proper permissions
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# Allow only one concurrent deployment
+# Prevent concurrent deployments
 concurrency:
   group: "pages"
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
-  nifty-analysis:
+  build-and-deploy:
     runs-on: ubuntu-latest
-
+    
+    # Critical: Set environment
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-
+      
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
-
-    - name: Cache pip dependencies
-      uses: actions/cache@v3
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-
+        
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-
-    - name: Run Nifty 50 Technical Analysis
+        
+    - name: Run Analysis and Generate HTML
       run: |
         python main_web.py
         python generate_html.py
-
-    - name: Verify generated files
+        
+    - name: Verify files generated
       run: |
         ls -la
-        echo "=== Checking if index.html exists ==="
-        if [ -f "index.html" ]; then
-          echo "✅ index.html generated successfully"
-          head -20 index.html
-        else
-          echo "❌ index.html not found"
+        if [ ! -f "index.html" ]; then
+          echo "Error: index.html not generated"
           exit 1
         fi
-
+        
     - name: Setup Pages
       uses: actions/configure-pages@v4
       with:
-    enablement: true  # Add this line
-    
+        enablement: true
+        
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v3
       with:
